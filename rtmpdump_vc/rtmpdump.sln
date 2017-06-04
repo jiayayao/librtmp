@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtmpdump", "rtmpdump.vcproj", "{21B9B142-5139-4BF3-A6B4-D6D199D6F5EF}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtmpdump", "rtmpdump.vcxproj", "{21B9B142-5139-4BF3-A6B4-D6D199D6F5EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
