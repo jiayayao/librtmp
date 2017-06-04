@@ -912,20 +912,20 @@ RTMP_Connect(RTMP *r, RTMPPacket *cp)
     {
       /* Connect via SOCKS */
       if (!add_addr_info(&service, &r->Link.sockshost, r->Link.socksport))
-	return FALSE;
+        return FALSE;
     }
   else
     {
       /* Connect directly */
       if (!add_addr_info(&service, &r->Link.hostname, r->Link.port))
-	return FALSE;
+        return FALSE;
     }
-
+  // 负责建立TCP底层连接：socket/connect
   if (!RTMP_Connect0(r, (struct sockaddr *)&service))
     return FALSE;
 
   r->m_bSendCounter = TRUE;
-
+  // 负责握手操作
   return RTMP_Connect1(r, cp);
 }
 
@@ -1452,59 +1452,59 @@ SendConnectPacket(RTMP *r, RTMPPacket *cp)
   if (!enc)
     return FALSE;
   if (r->Link.protocol & RTMP_FEATURE_WRITE)
-    {
-      enc = AMF_EncodeNamedString(enc, pend, &av_type, &av_nonprivate);
-      if (!enc)
-	return FALSE;
-    }
+  {
+    enc = AMF_EncodeNamedString(enc, pend, &av_type, &av_nonprivate);
+    if (!enc)
+      return FALSE;
+  }
   if (r->Link.flashVer.av_len)
-    {
-      enc = AMF_EncodeNamedString(enc, pend, &av_flashVer, &r->Link.flashVer);
-      if (!enc)
-	return FALSE;
-    }
+  {
+    enc = AMF_EncodeNamedString(enc, pend, &av_flashVer, &r->Link.flashVer);
+    if (!enc)
+      return FALSE;
+  }
   if (r->Link.swfUrl.av_len)
-    {
-      enc = AMF_EncodeNamedString(enc, pend, &av_swfUrl, &r->Link.swfUrl);
-      if (!enc)
-	return FALSE;
-    }
+  {
+    enc = AMF_EncodeNamedString(enc, pend, &av_swfUrl, &r->Link.swfUrl);
+    if (!enc)
+      return FALSE;
+  }
   if (r->Link.tcUrl.av_len)
-    {
-      enc = AMF_EncodeNamedString(enc, pend, &av_tcUrl, &r->Link.tcUrl);
-      if (!enc)
-	return FALSE;
-    }
+  {
+    enc = AMF_EncodeNamedString(enc, pend, &av_tcUrl, &r->Link.tcUrl);
+    if (!enc)
+      return FALSE;
+  }
   if (!(r->Link.protocol & RTMP_FEATURE_WRITE))
+  {
+    enc = AMF_EncodeNamedBoolean(enc, pend, &av_fpad, FALSE);
+    if (!enc)
+      return FALSE;
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_capabilities, 15.0);
+    if (!enc)
+      return FALSE;
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_audioCodecs, r->m_fAudioCodecs);
+    if (!enc)
+      return FALSE;
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_videoCodecs, r->m_fVideoCodecs);
+    if (!enc)
+      return FALSE;
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_videoFunction, 1.0);
+    if (!enc)
+      return FALSE;
+    if (r->Link.pageUrl.av_len)
     {
-      enc = AMF_EncodeNamedBoolean(enc, pend, &av_fpad, FALSE);
+      enc = AMF_EncodeNamedString(enc, pend, &av_pageUrl, &r->Link.pageUrl);
       if (!enc)
-	return FALSE;
-      enc = AMF_EncodeNamedNumber(enc, pend, &av_capabilities, 15.0);
-      if (!enc)
-	return FALSE;
-      enc = AMF_EncodeNamedNumber(enc, pend, &av_audioCodecs, r->m_fAudioCodecs);
-      if (!enc)
-	return FALSE;
-      enc = AMF_EncodeNamedNumber(enc, pend, &av_videoCodecs, r->m_fVideoCodecs);
-      if (!enc)
-	return FALSE;
-      enc = AMF_EncodeNamedNumber(enc, pend, &av_videoFunction, 1.0);
-      if (!enc)
-	return FALSE;
-      if (r->Link.pageUrl.av_len)
-	{
-	  enc = AMF_EncodeNamedString(enc, pend, &av_pageUrl, &r->Link.pageUrl);
-	  if (!enc)
-	    return FALSE;
-	}
+        return FALSE;
     }
+  }
   if (r->m_fEncoding != 0.0 || r->m_bSendEncoding)
-    {	/* AMF0, AMF3 not fully supported yet */
-      enc = AMF_EncodeNamedNumber(enc, pend, &av_objectEncoding, r->m_fEncoding);
-      if (!enc)
-	return FALSE;
-    }
+  {	/* AMF0, AMF3 not fully supported yet */
+    enc = AMF_EncodeNamedNumber(enc, pend, &av_objectEncoding, r->m_fEncoding);
+    if (!enc)
+      return FALSE;
+  }
   if (enc + 3 >= pend)
     return FALSE;
   *enc++ = 0;
@@ -1513,24 +1513,24 @@ SendConnectPacket(RTMP *r, RTMPPacket *cp)
 
   /* add auth string */
   if (r->Link.auth.av_len)
-    {
-      enc = AMF_EncodeBoolean(enc, pend, r->Link.lFlags & RTMP_LF_AUTH);
-      if (!enc)
-	return FALSE;
-      enc = AMF_EncodeString(enc, pend, &r->Link.auth);
-      if (!enc)
-	return FALSE;
-    }
+  {
+    enc = AMF_EncodeBoolean(enc, pend, r->Link.lFlags & RTMP_LF_AUTH);
+    if (!enc)
+      return FALSE;
+    enc = AMF_EncodeString(enc, pend, &r->Link.auth);
+    if (!enc)
+      return FALSE;
+  }
   if (r->Link.extras.o_num)
+  {
+    int i;
+    for (i = 0; i < r->Link.extras.o_num; i++)
     {
-      int i;
-      for (i = 0; i < r->Link.extras.o_num; i++)
-	{
-	  enc = AMFProp_Encode(&r->Link.extras.o_props[i], enc, pend);
-	  if (!enc)
-	    return FALSE;
-	}
+      enc = AMFProp_Encode(&r->Link.extras.o_props[i], enc, pend);
+      if (!enc)
+        return FALSE;
     }
+  }
   packet.m_nBodySize = enc - packet.m_body;
 
   return RTMP_SendPacket(r, &packet, TRUE);
@@ -3039,13 +3039,13 @@ HandShake(RTMP *r, int FP9HandShake)
   char type;
   char clientbuf[RTMP_SIG_SIZE + 1], *clientsig = clientbuf + 1;
   char serversig[RTMP_SIG_SIZE];
-
+  // C0表示版本号
   clientbuf[0] = 0x03;		/* not encrypted */
 
   uptime = htonl(RTMP_GetTime());
-  memcpy(clientsig, &uptime, 4);
+  memcpy(clientsig, &uptime, 4);// C1的前4个字节为时间
 
-  memset(&clientsig[4], 0, 4);
+  memset(&clientsig[4], 0, 4);// C1的后4个字节为0
 
 #ifdef _DEBUG
   for (i = 8; i < RTMP_SIG_SIZE; i++)
@@ -3055,18 +3055,21 @@ HandShake(RTMP *r, int FP9HandShake)
     clientsig[i] = (char)(rand() % 256);
 #endif
 
+  // C0和C1一起发送，发送1537个字节
   if (!WriteN(r, clientbuf, RTMP_SIG_SIZE + 1))
     return FALSE;
 
+  // 读取S0
   if (ReadN(r, &type, 1) != 1)	/* 0x03 or 0x06 */
     return FALSE;
 
   RTMP_Log(RTMP_LOGDEBUG, "%s: Type Answer   : %02X", __FUNCTION__, type);
 
+  // 如果S0和C0不等的话（即RTMP版本不匹配），警告
   if (type != clientbuf[0])
     RTMP_Log(RTMP_LOGWARNING, "%s: Type mismatch: client sent %d, server answered %d",
 	__FUNCTION__, clientbuf[0], type);
-
+  // 读取S1
   if (ReadN(r, serversig, RTMP_SIG_SIZE) != RTMP_SIG_SIZE)
     return FALSE;
 
@@ -3080,17 +3083,18 @@ HandShake(RTMP *r, int FP9HandShake)
       serversig[4], serversig[5], serversig[6], serversig[7]);
 
   /* 2nd part of handshake */
+  // S1就直接作为C2发送出去
   if (!WriteN(r, serversig, RTMP_SIG_SIZE))
     return FALSE;
-
+  // 接收S2
   if (ReadN(r, serversig, RTMP_SIG_SIZE) != RTMP_SIG_SIZE)
     return FALSE;
-
+  // 比较S2和发送的C1，如果不相等，则视为不匹配；如果相等，则握手成功
   bMatch = (memcmp(serversig, clientsig, RTMP_SIG_SIZE) == 0);
   if (!bMatch)
-    {
+  {
       RTMP_Log(RTMP_LOGWARNING, "%s, client signature does not match!", __FUNCTION__);
-    }
+  }
   return TRUE;
 }
 
@@ -3310,7 +3314,7 @@ RTMP_SendPacket(RTMP *r, RTMPPacket *packet, int queue)
       int wrote;
 
       if (nSize < nChunkSize)
-	nChunkSize = nSize;
+        nChunkSize = nSize;
 
       RTMP_LogHexString(RTMP_LOGDEBUG2, (uint8_t *)header, hSize);
       RTMP_LogHexString(RTMP_LOGDEBUG2, (uint8_t *)buffer, nChunkSize);

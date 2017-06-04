@@ -115,10 +115,13 @@ int publish_using_packet(){
         return -1;
     }
 
+    // 创建一个RTMP会话的句柄
     rtmp=RTMP_Alloc();
+    // 初始化RTMP句柄
     RTMP_Init(rtmp);
     //set connection timeout,default 30s
-    rtmp->Link.timeout=5;			
+    rtmp->Link.timeout=5;
+    // 设置URL
     if(!RTMP_SetupURL(rtmp,"rtmp://192.168.37.130:1935/myapp/test1"))
     {
         RTMP_Log(RTMP_LOGERROR,"SetupURL Err\n");
@@ -130,6 +133,9 @@ int publish_using_packet(){
     //if unable,the AMF command would be 'play' instead of 'publish'
     RTMP_EnableWrite(rtmp);	
 
+    // RTMP_Connect分为2步：RTMP_Connect0和RTMP_Connect1
+    // 0负责建立TCP底层连接
+    // 1负责RTMP握手操作
     if (!RTMP_Connect(rtmp,NULL)){
         RTMP_Log(RTMP_LOGERROR,"Connect Err\n");
         RTMP_Free(rtmp);
