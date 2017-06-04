@@ -119,7 +119,7 @@ int publish_using_packet(){
     RTMP_Init(rtmp);
     //set connection timeout,default 30s
     rtmp->Link.timeout=5;			
-    if(!RTMP_SetupURL(rtmp,"rtmp://localhost/publishlive/livestream"))
+    if(!RTMP_SetupURL(rtmp,"rtmp://192.168.37.130:1935/myapp/test1"))
     {
         RTMP_Log(RTMP_LOGERROR,"SetupURL Err\n");
         RTMP_Free(rtmp);
@@ -286,7 +286,7 @@ int publish_using_write(){
     RTMP_Init(rtmp);
     //set connection timeout,default 30s
     rtmp->Link.timeout=5;			
-    if(!RTMP_SetupURL(rtmp,"rtmp://localhost/publishlive/livestream"))
+    if(!RTMP_SetupURL(rtmp,"rtmp://192.168.37.130:1935/myapp/test1"))
     {
         RTMP_Log(RTMP_LOGERROR,"SetupURL Err\n");
         RTMP_Free(rtmp);
