@@ -129,9 +129,9 @@ static int clk_tck;
 uint32_t
 RTMP_GetTime()
 {
-#ifdef _DEBUG
-  return 0;
-#elif defined(_WIN32)
+//#ifdef _DEBUG
+//  return 0;
+#ifdef WIN32
   return timeGetTime();
 #else
   struct tms t;
