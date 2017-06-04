@@ -50,7 +50,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\OpenSSL-Win32\include;..\stdint;..\zlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NO_CRYPTO%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -97,7 +97,6 @@
     <ClCompile Include="..\librtmp\log.cpp" />
     <ClCompile Include="..\librtmp\parseurl.cpp" />
     <ClCompile Include="..\librtmp\rtmp.cpp" />
-    <ClCompile Include="..\rtmpdump.cpp" />
     <ClCompile Include="..\zlib\include\adler32.c" />
     <ClCompile Include="..\zlib\include\crc32.c" />
     <ClCompile Include="..\zlib\include\inflate.c" />
