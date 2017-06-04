@@ -1405,7 +1405,7 @@ WriteN(RTMP *r, const char *buffer, int n)
 
   return n == 0;
 }
-
+// ##是字符串连接，用在了字符串编码部分
 #define SAVC(x)	static const AVal av_##x = AVC(#x)
 
 SAVC(app);
@@ -1444,6 +1444,9 @@ SendConnectPacket(RTMP *r, RTMPPacket *cp)
   packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
 
   enc = packet.m_body;
+  // 将"connect"字符串编码
+  // pend是缓冲区的末尾，不变
+  // enc是未被使用的缓冲区的头部，每次编码后，向后移
   enc = AMF_EncodeString(enc, pend, &av_connect);
   enc = AMF_EncodeNumber(enc, pend, ++r->m_numInvokes);
   *enc++ = AMF_OBJECT;
@@ -3200,89 +3203,89 @@ RTMP_SendPacket(RTMP *r, RTMPPacket *packet, int queue)
   int tlen;
 
   if (prevPacket && packet->m_headerType != RTMP_PACKET_SIZE_LARGE)
-    {
-      /* compress a bit by using the prev packet's attributes */
-      if (prevPacket->m_nBodySize == packet->m_nBodySize
-	  && prevPacket->m_packetType == packet->m_packetType
-	  && packet->m_headerType == RTMP_PACKET_SIZE_MEDIUM)
-	packet->m_headerType = RTMP_PACKET_SIZE_SMALL;
+  {
+    /* compress a bit by using the prev packet's attributes */
+    if (prevPacket->m_nBodySize == packet->m_nBodySize
+      && prevPacket->m_packetType == packet->m_packetType
+      && packet->m_headerType == RTMP_PACKET_SIZE_MEDIUM)
+      packet->m_headerType = RTMP_PACKET_SIZE_SMALL;
 
-      if (prevPacket->m_nTimeStamp == packet->m_nTimeStamp
-	  && packet->m_headerType == RTMP_PACKET_SIZE_SMALL)
-	packet->m_headerType = RTMP_PACKET_SIZE_MINIMUM;
+    if (prevPacket->m_nTimeStamp == packet->m_nTimeStamp
+      && packet->m_headerType == RTMP_PACKET_SIZE_SMALL)
+      packet->m_headerType = RTMP_PACKET_SIZE_MINIMUM;
       last = prevPacket->m_nTimeStamp;
-    }
+  }
 
   if (packet->m_headerType > 3)	/* sanity */
-    {
-      RTMP_Log(RTMP_LOGERROR, "sanity failed!! trying to send header of type: 0x%02x.",
-	  (unsigned char)packet->m_headerType);
+  {
+    RTMP_Log(RTMP_LOGERROR, "sanity failed!! trying to send header of type: 0x%02x.",
+    (unsigned char)packet->m_headerType);
       return FALSE;
-    }
+  }
 
   nSize = packetSize[packet->m_headerType];
   hSize = nSize; cSize = 0;
   t = packet->m_nTimeStamp - last;
 
   if (packet->m_body)
-    {
-      header = packet->m_body - nSize;
-      hend = packet->m_body;
-    }
+  {
+    header = packet->m_body - nSize;
+    hend = packet->m_body;
+  }
   else
-    {
-      header = hbuf + 6;
-      hend = hbuf + sizeof(hbuf);
-    }
+  {
+    header = hbuf + 6;
+    hend = hbuf + sizeof(hbuf);
+  }
 
   if (packet->m_nChannel > 319)
     cSize = 2;
   else if (packet->m_nChannel > 63)
     cSize = 1;
   if (cSize)
-    {
-      header -= cSize;
-      hSize += cSize;
-    }
+  {
+    header -= cSize;
+    hSize += cSize;
+  }
 
   if (nSize > 1 && t >= 0xffffff)
-    {
-      header -= 4;
-      hSize += 4;
-    }
+  {
+    header -= 4;
+    hSize += 4;
+  }
 
   hptr = header;
   c = packet->m_headerType << 6;
   switch (cSize)
-    {
-    case 0:
-      c |= packet->m_nChannel;
-      break;
-    case 1:
-      break;
-    case 2:
-      c |= 1;
-      break;
-    }
+  {
+  case 0:
+    c |= packet->m_nChannel;
+    break;
+  case 1:
+    break;
+  case 2:
+    c |= 1;
+    break;
+  }
   *hptr++ = c;
   if (cSize)
-    {
-      int tmp = packet->m_nChannel - 64;
-      *hptr++ = tmp & 0xff;
-      if (cSize == 2)
-	*hptr++ = tmp >> 8;
-    }
+  {
+    int tmp = packet->m_nChannel - 64;
+    *hptr++ = tmp & 0xff;
+    if (cSize == 2)
+      *hptr++ = tmp >> 8;
+  }
 
   if (nSize > 1)
-    {
-      hptr = AMF_EncodeInt24(hptr, hend, t > 0xffffff ? 0xffffff : t);
-    }
+  {
+    hptr = AMF_EncodeInt24(hptr, hend, t > 0xffffff ? 0xffffff : t);
+  }
 
   if (nSize > 4)
-    {
-      hptr = AMF_EncodeInt24(hptr, hend, packet->m_nBodySize);
-      *hptr++ = packet->m_packetType;
-    }
+  {
+    hptr = AMF_EncodeInt24(hptr, hend, packet->m_nBodySize);
+    *hptr++ = packet->m_packetType;
+  }
 
   if (nSize > 8)
     hptr += EncodeInt32LE(hptr, packet->m_nInfoField2);
@@ -3298,85 +3301,85 @@ RTMP_SendPacket(RTMP *r, RTMPPacket *packet, int queue)
       nSize);
   /* send all chunks in one HTTP request */
   if (r->Link.protocol & RTMP_FEATURE_HTTP)
+  {
+    int chunks = (nSize+nChunkSize-1) / nChunkSize;
+    if (chunks > 1)
     {
-      int chunks = (nSize+nChunkSize-1) / nChunkSize;
-      if (chunks > 1)
-        {
-	  tlen = chunks * (cSize + 1) + nSize + hSize;
-	  tbuf = (char *) malloc(tlen);
-	  if (!tbuf)
-	    return FALSE;
-	  toff = tbuf;
-	}
+      tlen = chunks * (cSize + 1) + nSize + hSize;
+      tbuf = (char *) malloc(tlen);
+      if (!tbuf)
+        return FALSE;
+      toff = tbuf;
     }
+  }
   while (nSize + hSize)
+  {
+    int wrote;
+
+    if (nSize < nChunkSize)
+      nChunkSize = nSize;
+
+    RTMP_LogHexString(RTMP_LOGDEBUG2, (uint8_t *)header, hSize);
+    RTMP_LogHexString(RTMP_LOGDEBUG2, (uint8_t *)buffer, nChunkSize);
+    if (tbuf)
     {
-      int wrote;
+      memcpy(toff, header, nChunkSize + hSize);
+      toff += nChunkSize + hSize;
+    }
+    else
+    {
+      wrote = WriteN(r, header, nChunkSize + hSize);
+      if (!wrote)
+        return FALSE;
+    }
+    nSize -= nChunkSize;
+    buffer += nChunkSize;
+    hSize = 0;
 
-      if (nSize < nChunkSize)
-        nChunkSize = nSize;
-
-      RTMP_LogHexString(RTMP_LOGDEBUG2, (uint8_t *)header, hSize);
-      RTMP_LogHexString(RTMP_LOGDEBUG2, (uint8_t *)buffer, nChunkSize);
-      if (tbuf)
-        {
-	  memcpy(toff, header, nChunkSize + hSize);
-	  toff += nChunkSize + hSize;
-	}
-      else
-        {
-	  wrote = WriteN(r, header, nChunkSize + hSize);
-	  if (!wrote)
-	    return FALSE;
-	}
-      nSize -= nChunkSize;
-      buffer += nChunkSize;
-      hSize = 0;
-
-      if (nSize > 0)
-	{
-	  header = buffer - 1;
-	  hSize = 1;
-	  if (cSize)
+    if (nSize > 0)
+    {
+	    header = buffer - 1;
+	    hSize = 1;
+	    if (cSize)
 	    {
 	      header -= cSize;
 	      hSize += cSize;
 	    }
-	  *header = (0xc0 | c);
-	  if (cSize)
+	    *header = (0xc0 | c);
+	    if (cSize)
 	    {
 	      int tmp = packet->m_nChannel - 64;
 	      header[1] = tmp & 0xff;
 	      if (cSize == 2)
-		header[2] = tmp >> 8;
+	        header[2] = tmp >> 8;
 	    }
-	}
     }
+  }
   if (tbuf)
-    {
-      int wrote = WriteN(r, tbuf, toff-tbuf);
-      free(tbuf);
-      tbuf = NULL;
-      if (!wrote)
-        return FALSE;
-    }
+  {
+    int wrote = WriteN(r, tbuf, toff-tbuf);
+    free(tbuf);
+    tbuf = NULL;
+    if (!wrote)
+      return FALSE;
+  }
 
   /* we invoked a remote method */
   if (packet->m_packetType == 0x14)
-    {
-      AVal method;
-      char *ptr;
-      ptr = packet->m_body + 1;
-      AMF_DecodeString(ptr, &method);
-      RTMP_Log(RTMP_LOGDEBUG, "Invoking %s", method.av_val);
-      /* keep it in call queue till result arrives */
-      if (queue) {
-        int txn;
-        ptr += 3 + method.av_len;
-        txn = (int)AMF_DecodeNumber(ptr);
-	AV_queue(&r->m_methodCalls, &r->m_numCalls, &method, txn);
-      }
+  {
+    AVal method;
+    char *ptr;
+    ptr = packet->m_body + 1;
+    AMF_DecodeString(ptr, &method);
+    RTMP_Log(RTMP_LOGDEBUG, "Invoking %s", method.av_val);
+    /* keep it in call queue till result arrives */
+    if (queue) {
+      int txn;
+      ptr += 3 + method.av_len;
+      txn = (int)AMF_DecodeNumber(ptr);
+      AV_queue(&r->m_methodCalls, &r->m_numCalls, &method, txn);
     }
+  }
 
   if (!r->m_vecChannelsOut[packet->m_nChannel])
     r->m_vecChannelsOut[packet->m_nChannel] = (RTMPPacket *) malloc(sizeof(RTMPPacket));
