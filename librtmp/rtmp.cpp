@@ -980,24 +980,24 @@ RTMP_ConnectStream(RTMP *r, int seekTime)
   r->m_mediaChannel = 0;
 
   while (!r->m_bPlaying && RTMP_IsConnected(r) && RTMP_ReadPacket(r, &packet))
+  {
+    if (RTMPPacket_IsReady(&packet))
     {
-      if (RTMPPacket_IsReady(&packet))
-	{
-	  if (!packet.m_nBodySize)
-	    continue;
-	  if ((packet.m_packetType == RTMP_PACKET_TYPE_AUDIO) ||
-	      (packet.m_packetType == RTMP_PACKET_TYPE_VIDEO) ||
-	      (packet.m_packetType == RTMP_PACKET_TYPE_INFO))
-	    {
-	      RTMP_Log(RTMP_LOGWARNING, "Received FLV packet before play()! Ignoring.");
-	      RTMPPacket_Free(&packet);
-	      continue;
-	    }
+      if (!packet.m_nBodySize)
+        continue;
+      if ((packet.m_packetType == RTMP_PACKET_TYPE_AUDIO) ||
+        (packet.m_packetType == RTMP_PACKET_TYPE_VIDEO) ||
+        (packet.m_packetType == RTMP_PACKET_TYPE_INFO))
+      {
+        RTMP_Log(RTMP_LOGWARNING, "Received FLV packet before play()! Ignoring.");
+        RTMPPacket_Free(&packet);
+        continue;
+      }
 
-	  RTMP_ClientPacket(r, &packet);
-	  RTMPPacket_Free(&packet);
-	}
+      RTMP_ClientPacket(r, &packet);
+      RTMPPacket_Free(&packet);
     }
+  }
 
   return r->m_bPlaying;
 }
@@ -1128,9 +1128,9 @@ RTMP_ClientPacket(RTMP *r, RTMPPacket *packet)
       HandleAudio(r, packet);
       bHasMediaPacket = 1;
       if (!r->m_mediaChannel)
-	r->m_mediaChannel = packet->m_nChannel;
+        r->m_mediaChannel = packet->m_nChannel;
       if (!r->m_pausing)
-	r->m_mediaStamp = packet->m_nTimeStamp;
+        r->m_mediaStamp = packet->m_nTimeStamp;
       break;
 
     case 0x09:
@@ -1139,112 +1139,112 @@ RTMP_ClientPacket(RTMP *r, RTMPPacket *packet)
       HandleVideo(r, packet);
       bHasMediaPacket = 1;
       if (!r->m_mediaChannel)
-	r->m_mediaChannel = packet->m_nChannel;
+        r->m_mediaChannel = packet->m_nChannel;
       if (!r->m_pausing)
-	r->m_mediaStamp = packet->m_nTimeStamp;
+        r->m_mediaStamp = packet->m_nTimeStamp;
       break;
 
     case 0x0F:			/* flex stream send */
       RTMP_Log(RTMP_LOGDEBUG,
-	  "%s, flex stream send, size %lu bytes, not supported, ignoring",
-	  __FUNCTION__, packet->m_nBodySize);
+        "%s, flex stream send, size %lu bytes, not supported, ignoring",
+        __FUNCTION__, packet->m_nBodySize);
       break;
 
     case 0x10:			/* flex shared object */
       RTMP_Log(RTMP_LOGDEBUG,
-	  "%s, flex shared object, size %lu bytes, not supported, ignoring",
-	  __FUNCTION__, packet->m_nBodySize);
+        "%s, flex shared object, size %lu bytes, not supported, ignoring",
+        __FUNCTION__, packet->m_nBodySize);
       break;
 
     case 0x11:			/* flex message */
       {
-	RTMP_Log(RTMP_LOGDEBUG,
-	    "%s, flex message, size %lu bytes, not fully supported",
-	    __FUNCTION__, packet->m_nBodySize);
-	/*RTMP_LogHex(packet.m_body, packet.m_nBodySize); */
+        RTMP_Log(RTMP_LOGDEBUG,
+          "%s, flex message, size %lu bytes, not fully supported",
+          __FUNCTION__, packet->m_nBodySize);
+	  /*RTMP_LogHex(packet.m_body, packet.m_nBodySize); */
 
-	/* some DEBUG code */
-#if 0
-	   RTMP_LIB_AMFObject obj;
-	   int nRes = obj.Decode(packet.m_body+1, packet.m_nBodySize-1);
-	   if(nRes < 0) {
-	   RTMP_Log(RTMP_LOGERROR, "%s, error decoding AMF3 packet", __FUNCTION__);
-	   /*return; */
-	   }
+	  /* some DEBUG code */
+  #if 0
+	     RTMP_LIB_AMFObject obj;
+	     int nRes = obj.Decode(packet.m_body+1, packet.m_nBodySize-1);
+	     if(nRes < 0) {
+	     RTMP_Log(RTMP_LOGERROR, "%s, error decoding AMF3 packet", __FUNCTION__);
+	     /*return; */
+	     }
 
-	   obj.Dump();
-#endif
+	     obj.Dump();
+  #endif
 
-	if (HandleInvoke(r, packet->m_body + 1, packet->m_nBodySize - 1) == 1)
-	  bHasMediaPacket = 2;
-	break;
+        if (HandleInvoke(r, packet->m_body + 1, packet->m_nBodySize - 1) == 1)
+          bHasMediaPacket = 2;
+        break;
       }
     case 0x12:
       /* metadata (notify) */
       RTMP_Log(RTMP_LOGDEBUG, "%s, received: notify %lu bytes", __FUNCTION__,
-	  packet->m_nBodySize);
+        packet->m_nBodySize);
       if (HandleMetadata(r, packet->m_body, packet->m_nBodySize))
-	bHasMediaPacket = 1;
+        bHasMediaPacket = 1;
       break;
 
     case 0x13:
       RTMP_Log(RTMP_LOGDEBUG, "%s, shared object, not supported, ignoring",
-	  __FUNCTION__);
+        __FUNCTION__);
       break;
 
     case 0x14:
       /* invoke */
       RTMP_Log(RTMP_LOGDEBUG, "%s, received: invoke %lu bytes", __FUNCTION__,
-	  packet->m_nBodySize);
+        packet->m_nBodySize);
       /*RTMP_LogHex(packet.m_body, packet.m_nBodySize); */
 
       if (HandleInvoke(r, packet->m_body, packet->m_nBodySize) == 1)
-	bHasMediaPacket = 2;
+        bHasMediaPacket = 2;
       break;
 
     case 0x16:
       {
-	/* go through FLV packets and handle metadata packets */
-	unsigned int pos = 0;
-	uint32_t nTimeStamp = packet->m_nTimeStamp;
+	      /* go through FLV packets and handle metadata packets */
+	      unsigned int pos = 0;
+	      uint32_t nTimeStamp = packet->m_nTimeStamp;
 
-	while (pos + 11 < packet->m_nBodySize)
-	  {
-	    uint32_t dataSize = AMF_DecodeInt24(packet->m_body + pos + 1);	/* size without header (11) and prevTagSize (4) */
+        while (pos + 11 < packet->m_nBodySize)
+        {
+          uint32_t dataSize = AMF_DecodeInt24(packet->m_body + pos + 1);	/* size without header (11) and prevTagSize (4) */
 
-	    if (pos + 11 + dataSize + 4 > packet->m_nBodySize)
-	      {
-		RTMP_Log(RTMP_LOGWARNING, "Stream corrupt?!");
-		break;
-	      }
-	    if (packet->m_body[pos] == 0x12)
-	      {
-		HandleMetadata(r, packet->m_body + pos + 11, dataSize);
-	      }
-	    else if (packet->m_body[pos] == 8 || packet->m_body[pos] == 9)
-	      {
-		nTimeStamp = AMF_DecodeInt24(packet->m_body + pos + 4);
-		nTimeStamp |= (packet->m_body[pos + 7] << 24);
-	      }
-	    pos += (11 + dataSize + 4);
-	  }
-	if (!r->m_pausing)
-	  r->m_mediaStamp = nTimeStamp;
+          if (pos + 11 + dataSize + 4 > packet->m_nBodySize)
+          {
+            RTMP_Log(RTMP_LOGWARNING, "Stream corrupt?!");
+            break;
+          }
+          if (packet->m_body[pos] == 0x12)
+          {
+            HandleMetadata(r, packet->m_body + pos + 11, dataSize);
+          }
+          else if (packet->m_body[pos] == 8 || packet->m_body[pos] == 9)
+          {
+            nTimeStamp = AMF_DecodeInt24(packet->m_body + pos + 4);
+            nTimeStamp |= (packet->m_body[pos + 7] << 24);
+          }
+          pos += (11 + dataSize + 4);
+        }
+	      if (!r->m_pausing)
+          r->m_mediaStamp = nTimeStamp;
 
-	/* FLV tag(s) */
-	/*RTMP_Log(RTMP_LOGDEBUG, "%s, received: FLV tag(s) %lu bytes", __FUNCTION__, packet.m_nBodySize); */
-	bHasMediaPacket = 1;
-	break;
+        /* FLV tag(s) */
+        /*RTMP_Log(RTMP_LOGDEBUG, "%s, received: FLV tag(s) %lu bytes", __FUNCTION__, packet.m_nBodySize); */
+        bHasMediaPacket = 1;
+        break;
       }
     default:
       RTMP_Log(RTMP_LOGDEBUG, "%s, unknown packet type received: 0x%02x", __FUNCTION__,
-	  packet->m_packetType);
+        packet->m_packetType);
 #ifdef _DEBUG
       RTMP_LogHex(RTMP_LOGDEBUG, (const uint8_t *)packet->m_body, packet->m_nBodySize);
 #endif
     }
 
-  return bHasMediaPacket;
+    return bHasMediaPacket;
 }
 
 //#ifdef _DEBUG
@@ -2303,7 +2303,7 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
   AMF_Dump(&obj);
   AMFProp_GetString(AMF_GetProp(&obj, NULL, 0), &method);
   txn = (int)AMFProp_GetNumber(AMF_GetProp(&obj, NULL, 1));
-  RTMP_Log(RTMP_LOGDEBUG, "%s, server invoking <%s>", __FUNCTION__, method.av_val);
+  RTMP_Log(RTMP_LOGDEBUG, "%s, ################################Server invoking method: <%s>", __FUNCTION__, method.av_val);
 
   if (AVMATCH(&method, &av__result))
     {
@@ -2376,9 +2376,9 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
 	}
       else if (AVMATCH(&methodInvoked, &av_play) ||
       	AVMATCH(&methodInvoked, &av_publish))
-	{
-	  r->m_bPlaying = TRUE;
-	}
+      {
+        r->m_bPlaying = TRUE;
+      }
       free(methodInvoked.av_val);
     }
   else if (AVMATCH(&method, &av_onBWDone))
@@ -2442,32 +2442,32 @@ HandleInvoke(RTMP *r, const char *body, unsigned int nBodySize)
 	}
 
       else if (AVMATCH(&code, &av_NetStream_Play_Start))
-	{
-	  int i;
-	  r->m_bPlaying = TRUE;
-	  for (i = 0; i < r->m_numCalls; i++)
-	    {
-	      if (AVMATCH(&r->m_methodCalls[i].name, &av_play))
-		{
-		  AV_erase(r->m_methodCalls, &r->m_numCalls, i, TRUE);
-		  break;
-		}
-	    }
-	}
+      {
+        int i;
+        r->m_bPlaying = TRUE;
+        for (i = 0; i < r->m_numCalls; i++)
+        {
+          if (AVMATCH(&r->m_methodCalls[i].name, &av_play))
+          {
+            AV_erase(r->m_methodCalls, &r->m_numCalls, i, TRUE);
+            break;
+          }
+        }
+      }
 
       else if (AVMATCH(&code, &av_NetStream_Publish_Start))
-	{
-	  int i;
-	  r->m_bPlaying = TRUE;
-	  for (i = 0; i < r->m_numCalls; i++)
-	    {
-	      if (AVMATCH(&r->m_methodCalls[i].name, &av_publish))
-		{
-		  AV_erase(r->m_methodCalls, &r->m_numCalls, i, TRUE);
-		  break;
-		}
-	    }
-	}
+      {
+        int i;
+        r->m_bPlaying = TRUE;
+        for (i = 0; i < r->m_numCalls; i++)
+        {
+          if (AVMATCH(&r->m_methodCalls[i].name, &av_publish))
+          {
+            AV_erase(r->m_methodCalls, &r->m_numCalls, i, TRUE);
+            break;
+          }
+        }
+      }
 
       /* Return 1 if this is a Play.Complete or Play.Stop */
       else if (AVMATCH(&code, &av_NetStream_Play_Complete)
@@ -3371,7 +3371,7 @@ RTMP_SendPacket(RTMP *r, RTMPPacket *packet, int queue)
     char *ptr;
     ptr = packet->m_body + 1;
     AMF_DecodeString(ptr, &method);
-    RTMP_Log(RTMP_LOGDEBUG, "Invoking %s", method.av_val);
+    RTMP_Log(RTMP_LOGDEBUG, "*********************************Invoking method: %s", method.av_val);
     /* keep it in call queue till result arrives */
     if (queue) {
       int txn;

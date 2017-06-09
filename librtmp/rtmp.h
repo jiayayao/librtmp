@@ -71,10 +71,16 @@ extern "C"
 
   uint32_t RTMP_GetTime(void);
 
+// 1-7为协议版本控制
+// 0x01: Set in chunk size
+// 0x05: Set server bindwidth
+// 0x06: Set client bindwidth
+
 #define RTMP_PACKET_TYPE_AUDIO 0x08
 #define RTMP_PACKET_TYPE_VIDEO 0x09
 #define RTMP_PACKET_TYPE_INFO  0x12
 
+// 15-20为发送AMF编码的命令，负责用户与服务器之间的交互，比如播放，暂停等
 #define RTMP_MAX_HEADER_SIZE 18
 
 #define RTMP_PACKET_SIZE_LARGE    0
