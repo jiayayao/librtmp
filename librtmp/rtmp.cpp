@@ -2308,6 +2308,7 @@ finish:
 
     if (AVMATCH(&method, &av__result))
     {
+      // method invoked指代服务器的通知，也可以理解为反射
       AVal methodInvoked = {0};
       int i;
 
@@ -2327,7 +2328,7 @@ finish:
       RTMP_Log(RTMP_LOGDEBUG, "%s, received result for method call <%s>", __FUNCTION__,
         methodInvoked.av_val);
 
-      if (AVMATCH(&methodInvoked, &av_connect))
+      if (AVMATCH(&methodInvoked, &av_connect))// connect命令返回的消息
       {
         if (r->Link.token.av_len)
         {
@@ -2348,6 +2349,7 @@ finish:
           RTMP_SendServerBW(r);
           RTMP_SendCtrl(r, 3, 0, 300);
         }
+        // 发送建立网络流命令：createStream
         RTMP_SendCreateStream(r);
 
         if (!(r->Link.protocol & RTMP_FEATURE_WRITE))
@@ -2359,7 +2361,7 @@ finish:
             SendFCSubscribe(r, &r->Link.playpath);
         }
       }
-      else if (AVMATCH(&methodInvoked, &av_createStream))
+      else if (AVMATCH(&methodInvoked, &av_createStream))// createStream命令返回的消息
       {
         r->m_stream_id = (int)AMFProp_GetNumber(AMF_GetProp(&obj, NULL, 3));
 
@@ -2376,7 +2378,7 @@ finish:
         }
       }
       else if (AVMATCH(&methodInvoked, &av_play) ||
-        AVMATCH(&methodInvoked, &av_publish))
+        AVMATCH(&methodInvoked, &av_publish))// play或publish命令返回的消息
       {
         r->m_bPlaying = TRUE;
       }
