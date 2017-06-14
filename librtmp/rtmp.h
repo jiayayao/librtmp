@@ -80,6 +80,7 @@ extern "C"
 #define RTMP_PACKET_TYPE_VIDEO 0x09
 #define RTMP_PACKET_TYPE_INFO  0x12
 
+// 0x14: Invoke
 // 15-20为发送AMF编码的命令，负责用户与服务器之间的交互，比如播放，暂停等
 #define RTMP_MAX_HEADER_SIZE 18
 

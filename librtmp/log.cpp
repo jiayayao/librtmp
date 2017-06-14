@@ -64,6 +64,8 @@ static void rtmp_log_default(int level, const char *format, va_list vl)
 			neednl = 0;
 		}
 		fprintf(fmsg, "%s: %s\n", levels[level], str);
+    OutputDebugString(str);
+    OutputDebugString("\n");
 #ifdef _DEBUG
 		fflush(fmsg);
 #endif

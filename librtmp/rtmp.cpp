@@ -1095,6 +1095,7 @@ finish:
     RTMP_ClientPacket(RTMP *r, RTMPPacket *packet)
   {
     int bHasMediaPacket = 0;
+    RTMP_Log(RTMP_LOGDEBUG, "%s, received pkt type:[%d]", __FUNCTION__, packet->m_packetType);
     switch (packet->m_packetType)
     {
     case 0x01:
