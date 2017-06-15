@@ -162,8 +162,10 @@ int publish_using_packet(){
     RTMP_LogPrintf("Start to send data ...\n");
 
     //jump over FLV Header
+    // FLV格式的header为9个字节
     fseek(fp,9,SEEK_SET);	
     //jump over previousTagSizen
+    // 跳过表征前一段Tag大小的4个字节
     fseek(fp,4,SEEK_CUR);	
     start_time=RTMP_GetTime();
     while(1)
@@ -181,15 +183,20 @@ int publish_using_packet(){
         }
 
         //not quite the same as FLV spec
+        // 读取当前Tag的类型（1个字节）
         if(!ReadU8(&type,fp))	
             break;
+        // 读取当前Tag data部分的大小（3个字节）
         if(!ReadU24(&datalength,fp))
             break;
+        // 读取时间戳（4个字节）
         if(!ReadTime(&timestamp,fp))
             break;
+        // 读取stream id（3个字节），一般为0
         if(!ReadU24(&streamid,fp))
             break;
 
+        // 跳过既非视频也非音频的Tag
         if (type!=0x08&&type!=0x09){
             //jump over non_audio and non_video frame，
             //jump over next previousTagSizen at the same time
@@ -197,6 +204,7 @@ int publish_using_packet(){
             continue;
         }
 
+        // 读取当前音视频Tag的数据到packet
         if(fread(packet->m_body,1,datalength,fp)!=datalength)
             break;
 
@@ -210,14 +218,17 @@ int publish_using_packet(){
             RTMP_Log(RTMP_LOGERROR,"rtmp is not connect\n");
             break;
         }
+        // 这样看下来是一个Tag发送一个RTMPPacket
         if (!RTMP_SendPacket(rtmp,packet,0)){
             RTMP_Log(RTMP_LOGERROR,"Send Error\n");
             break;
         }
 
+        // 读取前一个Tag的size
         if(!ReadU32(&preTagsize,fp))
             break;
 
+        // 读取当前Tag的type
         if(!PeekU8(&type,fp))
             break;
         if(type==0x09){
