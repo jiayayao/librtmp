@@ -218,7 +218,7 @@ int publish_using_packet(){
             RTMP_Log(RTMP_LOGERROR,"rtmp is not connect\n");
             break;
         }
-        // 这样看下来是一个Tag发送一个RTMPPacket
+        // 这样看下来是一个FLV的Tag发送一个RTMPPacket
         if (!RTMP_SendPacket(rtmp,packet,0)){
             RTMP_Log(RTMP_LOGERROR,"Send Error\n");
             break;

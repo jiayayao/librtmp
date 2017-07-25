@@ -3113,11 +3113,12 @@ leave:
     uint32_t uptime;
     int bMatch;
 
+    // 接收版本号字节
     if (ReadN(r, serverbuf, 1) != 1)	/* 0x03 or 0x06 */
       return FALSE;
 
     RTMP_Log(RTMP_LOGDEBUG, "%s: Type Request  : %02X", __FUNCTION__, serverbuf[0]);
-
+    // 如果版本号字节不是3，则认为握手失败
     if (serverbuf[0] != 3)
     {
       RTMP_Log(RTMP_LOGERROR, "%s: Type unknown: client sent %02X",
@@ -3136,10 +3137,10 @@ leave:
     for (i = 8; i < RTMP_SIG_SIZE; i++)
       serversig[i] = (char)(rand() % 256);
 #endif
-
+    // 将接收到的数据作为S0和S1，原路返回
     if (!WriteN(r, serverbuf, RTMP_SIG_SIZE + 1))
       return FALSE;
-
+    // 读取C1块
     if (ReadN(r, clientsig, RTMP_SIG_SIZE) != RTMP_SIG_SIZE)
       return FALSE;
 
@@ -3153,12 +3154,13 @@ leave:
       clientsig[4], clientsig[5], clientsig[6], clientsig[7]);
 
     /* 2nd part of handshake */
+    // 写入S2块
     if (!WriteN(r, clientsig, RTMP_SIG_SIZE))
       return FALSE;
-
+    // 读取C2块
     if (ReadN(r, clientsig, RTMP_SIG_SIZE) != RTMP_SIG_SIZE)
       return FALSE;
-
+    // 校验是否相等，相等则认为握手成功
     bMatch = (memcmp(serversig, clientsig, RTMP_SIG_SIZE) == 0);
     if (!bMatch)
     {
@@ -4000,7 +4002,7 @@ stopKeyframeSearch:
         if (!(r->m_read.flags & RTMP_READ_NO_IGNORE) &&
           packet.m_packetType != 0x16)
         {			/* exclude type 0x16 (FLV) since it can
-              * contain several FLV packets */
+                    * contain several FLV packets */
           if (packet.m_nTimeStamp == 0)
           {
             ret = RTMP_READ_IGNORE;
