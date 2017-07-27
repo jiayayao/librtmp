@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtmpdump", "rtmpdump.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testRTMP", "..\testRTMP\testRTMP.vcxproj", "{7CA5BFE6-3177-48FA-858E-0D44DF5A8D66}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simplest_librtmp_receive", "..\simplest_librtmp_receive\simplest_librtmp_receive.vcxproj", "{F11AD463-27D7-440A-801A-EFD77272F2F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{7CA5BFE6-3177-48FA-858E-0D44DF5A8D66}.Debug|Win32.Build.0 = Debug|Win32
 		{7CA5BFE6-3177-48FA-858E-0D44DF5A8D66}.Release|Win32.ActiveCfg = Release|Win32
 		{7CA5BFE6-3177-48FA-858E-0D44DF5A8D66}.Release|Win32.Build.0 = Release|Win32
+		{F11AD463-27D7-440A-801A-EFD77272F2F8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F11AD463-27D7-440A-801A-EFD77272F2F8}.Debug|Win32.Build.0 = Debug|Win32
+		{F11AD463-27D7-440A-801A-EFD77272F2F8}.Release|Win32.ActiveCfg = Release|Win32
+		{F11AD463-27D7-440A-801A-EFD77272F2F8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
